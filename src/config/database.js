@@ -15,21 +15,22 @@ const client = new cassandra.Client({
   }
 });
 
-// Initialize the database
 async function initializeDatabase() {
   try {
     await client.connect();
     console.log('Connected to Cassandra');
     
-    // Execute initialization script
-    const fs = require('fs');
-    const path = require('path');
-    const initScript = fs.readFileSync(path.join(__dirname, '../../init-cassandra.cql'), 'utf8');
+    const fs = require("fs");
+    const path = require("path");
+    const initScript = fs.readFileSync(
+      path.join(__dirname, "../../init-cassandra.cql"),
+      "utf8"
+    );
+
+    const statements = initScript
+      .split(";")
+      .filter((statement) => statement.trim());
     
-    // Split the script into individual statements
-    const statements = initScript.split(';').filter(statement => statement.trim());
-    
-    // Execute each statement
     for (const statement of statements) {
       if (statement.trim()) {
         await client.execute(statement);
