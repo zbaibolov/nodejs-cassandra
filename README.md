@@ -12,61 +12,80 @@ A simple User Activity Log System built with Node.js and Cassandra that stores a
 ## Prerequisites
 
 - Node.js (v14 or higher)
-- Cassandra (v4.0 or higher) - for local setup
-- Docker and Docker Compose - for Docker setup
+- Apache Cassandra (v4.0 or higher)
 - npm or yarn
+- Homebrew (macOS package manager)
 
 ## Setup and Running
 
-### Option 1: Local Setup (Without Docker)
+### 1. Install Cassandra
 
-1. Install dependencies:
+Using Homebrew:
+```bash
+brew install cassandra
+```
+
+### 2. Start Cassandra
+
+```bash
+brew services start cassandra
+```
+
+### 3. Verify Cassandra Installation
+```bash
+cqlsh
+```
+
+### 4. Create Keyspace and Table
+Once in cqlsh, run:
+```sql
+CREATE KEYSPACE activity_logs WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+USE activity_logs;
+
+CREATE TABLE user_activities (
+    user_id text,
+    activity_id uuid,
+    activity_type text,
+    timestamp timestamp,
+    PRIMARY KEY ((user_id), timestamp, activity_id)
+) WITH CLUSTERING ORDER BY (timestamp DESC);
+```
+
+### 5. Project Setup
+
+1. Clone the repository
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Create a .env file in the root directory with the following variables:
+3. Set up environment variables:
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit the .env file with your configuration
+nano .env  # or use your preferred text editor
 ```
+
+The .env file should contain the following variables:
+```
+# Cassandra Configuration
 CASSANDRA_HOSTS=localhost
 CASSANDRA_PORT=9042
 CASSANDRA_KEYSPACE=activity_log
 CASSANDRA_USERNAME=
 CASSANDRA_PASSWORD=
-ACTIVITY_LOG_TTL=2592000
-```
 
-3. Start Cassandra locally and create the keyspace:
-```sql
-CREATE KEYSPACE activity_log WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+# Application Configuration
+ACTIVITY_LOG_TTL=2592000  # 30 days in seconds
 ```
 
 4. Start the application:
 ```bash
 npm start
-```
-
-### Option 2: Docker Setup
-
-1. Make sure Docker and Docker Compose are installed on your system.
-
-2. Build and start the containers:
-```bash
-docker-compose up --build
-```
-
-This will:
-- Start a Cassandra container
-- Initialize the database with the required keyspace and table
-- Start the Node.js application
-
-3. To stop the application:
-```bash
-docker-compose down
-```
-
-4. To stop and remove all data (including the Cassandra volume):
-```bash
-docker-compose down -v
 ```
 
 ## API Endpoints
@@ -81,14 +100,24 @@ docker-compose down -v
 The system uses the following Cassandra schema:
 
 ```sql
-CREATE TABLE activity_log.user_activities (
+CREATE TABLE activity_logs.user_activities (
     user_id text,
     activity_id uuid,
     activity_type text,
+    description text,
     timestamp timestamp,
+    metadata map<text, text>,
     PRIMARY KEY ((user_id), timestamp, activity_id)
 ) WITH CLUSTERING ORDER BY (timestamp DESC);
 ```
+
+The table structure includes:
+- `user_id`: The identifier of the user performing the activity
+- `activity_id`: A unique identifier for each activity (UUID)
+- `activity_type`: The type of activity (e.g., 'login', 'logout', 'view')
+- `description`: A text description of the activity
+- `timestamp`: When the activity occurred
+- `metadata`: A map of key-value pairs for additional activity information
 
 ## Consistency and Fault Tolerance
 
@@ -99,15 +128,3 @@ CREATE TABLE activity_log.user_activities (
 ## Testing the API
 
 You can use the provided Postman collection in the `postman` directory to test the API endpoints. See the Postman README for detailed instructions.
-
-## Troubleshooting
-
-### Local Setup Issues
-- Ensure Cassandra is running and accessible
-- Check if the keyspace is created correctly
-- Verify environment variables in .env file
-
-### Docker Setup Issues
-- If containers fail to start, try `docker-compose down -v` and rebuild
-- Check container logs with `docker-compose logs`
-- Ensure ports 3000 and 9042 are not in use by other applications 

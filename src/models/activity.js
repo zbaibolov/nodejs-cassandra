@@ -68,8 +68,7 @@ class Activity {
     const query = `
       SELECT * FROM user_activities
       WHERE user_id = ?
-      LIMIT ?
-      ORDER BY timestamp DESC;
+      LIMIT ?;
     `;
     
     try {
