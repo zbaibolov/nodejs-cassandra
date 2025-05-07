@@ -47,7 +47,9 @@ CREATE TABLE user_activities (
     user_id text,
     activity_id uuid,
     activity_type text,
+    description text,
     timestamp timestamp,
+    metadata map<text, text>,
     PRIMARY KEY ((user_id), timestamp, activity_id)
 ) WITH CLUSTERING ORDER BY (timestamp DESC);
 ```
